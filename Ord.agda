@@ -1,4 +1,4 @@
-{-# OPTIONS --irrelevant-projections #-}
+--{-# OPTIONS --irrelevant-projections #-}
 
 -- FIXME
 -- Get rid of this when everyhting is proven. I
