@@ -143,6 +143,9 @@ l≮ₒl (t< x x₁ l<l) = l≮ₒl l<l
 ≮ₒ∧≢ₒ⇒>ₒ : ∀ {a b} → ¬ a <ₒ b → ¬ a ≡ b → a >ₒ b
 a≮b⇒a≢b⇒a>b : ∀ {a b} → ¬ a < b → ¬ a ≡ b → a > b
 
+l≮ₒ0 : ∀ {l} → ¬ l <ₒ 0ₒ
+l≮ₒ0 ()
+
 
 -- Make <ₒ decidable
 infixl 10 _<ₒ?_
@@ -213,7 +216,8 @@ a<ₒb⇒a≡c⇒c<ₒb a<b refl = a<b
 <ₒ-trans (k< x x₁) (e< y) = e< (a<ₒb⇒a≡c⇒c<ₒb y (sym x))
 <ₒ-trans (t< x x₁ x₂) (e< y) = e< (a<ₒb⇒a≡c⇒c<ₒb y (sym x))
 
-
+¬x<y⇒x>y : ∀ {x y} → x <ₒ y → x >ₒ y → ⊥
+¬x<y⇒x>y x<y x>y = contradiction (<ₒ-trans x<y x>y) l≮ₒl
 
 a≮b⇒a≢b⇒a>b {zero} {zero} a≮b a≢b = contradiction refl a≢b
 a≮b⇒a≢b⇒a>b {zero} {suc b} a≮b a≢b = contradiction (s≤s z≤n) a≮b
@@ -259,6 +263,7 @@ a >ₑ? (x ∷ b ⟨ x₁ ⟩) with OrdTerm.exp a >ₒ? OrdTerm.exp x
 >ₑ-trans {l = 0ₒ} t>xl = zz
 >ₑ-trans {x = y} {x ∷ xs ⟨ px ⟩} {pf} (ss t>y) with recompute (y >ₑ? x ∷ xs ⟨ px ⟩) pf
 >ₑ-trans {x = y} {x ∷ xs ⟨ px ⟩} {pf} (ss t>y) | ss y>x = ss (<ₒ-trans y>x t>y)
+
 
 
 -- Definition of ordinal addition.
@@ -335,6 +340,10 @@ a+0≡a : ∀ {a} → a +ₒ 0ₒ ≡ a
 a+0≡a {0ₒ} = refl
 a+0≡a {_ ∷ _ ⟨ _ ⟩} = refl
 
+0+a≡a : ∀ {a} → 0ₒ +ₒ a ≡ a
+0+a≡a {a} = refl
+
+
 -- A fact about ordinal comprarison.
 xthm : ∀ {x xs y ys}.{pf pf₁}
     → x ∷ xs ⟨ pf ⟩ <ₒ y ∷ ys ⟨ pf₁ ⟩
@@ -389,6 +398,206 @@ a+b>a+c {ω^ .exp · k ⟨ k>0 ⟩ ∷ a ⟨ x₁ ⟩} {x₂ ∷ b ⟨ x₃ ⟩}
   contradiction (≮ₒ∧≢ₒ⇒>ₒ ¬p ¬p₁) (xthm b>c) --contra as well
 a+b>a+c {x ∷ a ⟨ x₁ ⟩} {x₂ ∷ b ⟨ x₃ ⟩} {x₄ ∷ c ⟨ x₅ ⟩} b>c | no ¬p | no ¬p₁ | no ¬p₂ | no ¬p₃ = t< refl refl (a+b>a+c {a = a} b>c)
 
+
+k+x≮k : ∀ {k x} → x > 0 → ¬ k + x < k
+k+x≮k {zero} {x} x>0 x<0 = contradiction x>0 $ <⇒≯ x<0
+k+x≮k {suc k} {x} x>0 pf = contradiction (≤-pred pf) (k+x≮k {k = k} x>0)
+
+k+x≢k : ∀ {k x} → x > 0 → ¬ k + x ≡ k
+k+x≢k {zero} {.0} () refl
+k+x≢k {suc k} {x} x>0 t = contradiction (suc-injective t) (k+x≢k x>0)
+
+a+b<a+c⇒b<c : ∀ {a b c} → a +ₒ b <ₒ a +ₒ c → b <ₒ c
+a+b<a+c⇒b<c {0ₒ} {b} {c} a+b<a+c = a+b<a+c
+a+b<a+c⇒b<c {x₁ ∷ a₁ ⟨ x₂ ⟩} {0ₒ} {0ₒ} a+b<a+c = contradiction a+b<a+c l≮ₒl
+a+b<a+c⇒b<c {x₁ ∷ a₁ ⟨ x₂ ⟩} {0ₒ} {x₃ ∷ c₁ ⟨ x₄ ⟩} a+b<a+c = z<
+a+b<a+c⇒b<c {x₁ ∷ a₁ ⟨ x₂ ⟩} {x₃ ∷ b₁ ⟨ x₄ ⟩} {0ₒ} a+b<a+c = contradiction a+b<a+c (<⇒≮ (a+ₒb>a foo)) 
+  where
+    foo : ¬ (x₃ ∷ b₁ ⟨ x₄ ⟩) ≡ 0ₒ
+    foo ()
+a+b<a+c⇒b<c {x₁ ∷ a₁ ⟨ x₂ ⟩} {x₃ ∷ b₁ ⟨ x₄ ⟩} {x₅ ∷ c₁ ⟨ x₆ ⟩} a+b<a+c
+            with OrdTerm.exp x₁ <ₒ? OrdTerm.exp x₃
+a+b<a+c⇒b<c {x₁ ∷ a₁ ⟨ x₂ ⟩} {x₃ ∷ b₁ ⟨ x₄ ⟩} {x₅ ∷ c₁ ⟨ x₆ ⟩} a+b<a+c | yes ex1<ex3 with  OrdTerm.exp x₁ <ₒ? OrdTerm.exp x₅
+... | yes ex1<ex5 = a+b<a+c
+... | no ¬ex1<ex5 with OrdTerm.exp x₁ ≟ₒ OrdTerm.exp x₅
+a+b<a+c⇒b<c {ω^ .(OrdTerm.exp x₅) · k ⟨ k>0 ⟩ ∷ a₁ ⟨ x₂ ⟩} {x₃ ∷ b₁ ⟨ x₄ ⟩} {x₅ ∷ c₁ ⟨ x₆ ⟩} (e< a+b<a+c)
+            | yes ex1<ex3 | no ¬ex1<ex5 | yes refl = e< a+b<a+c
+a+b<a+c⇒b<c {ω^ .(OrdTerm.exp x₅) · k ⟨ k>0 ⟩ ∷ a₁ ⟨ x₂ ⟩} {x₃ ∷ b₁ ⟨ x₄ ⟩} {x₅ ∷ c₁ ⟨ x₆ ⟩} (k< x₁ x₇)
+            | yes ex1<ex3 | no ¬ex1<ex5 | yes refl
+  = contradiction (subst (OrdTerm.exp x₅ <ₒ_) x₁ ex1<ex3) l≮ₒl
+a+b<a+c⇒b<c {ω^ .(OrdTerm.exp x₅) · k ⟨ k>0 ⟩ ∷ a₁ ⟨ x₂ ⟩} {x₃ ∷ b₁ ⟨ x₄ ⟩} {x₅ ∷ c₁ ⟨ x₆ ⟩} (t< x₁ x₇ a+b<a+c)
+            | yes ex1<ex3 | no ¬ex1<ex5 | yes refl
+  = contradiction (subst (OrdTerm.exp x₅ <ₒ_) x₁ ex1<ex3) l≮ₒl
+a+b<a+c⇒b<c {x₁ ∷ a₁ ⟨ x₂ ⟩} {x₃ ∷ b₁ ⟨ x₄ ⟩} {x₅ ∷ c₁ ⟨ x₆ ⟩} (e< a+b<a+c)
+            | yes ex1<ex3 | no ¬ex1<ex5 | no ¬ex1=ex5
+  = contradiction a+b<a+c (<⇒≮ ex1<ex3)
+a+b<a+c⇒b<c {x₁ ∷ a₁ ⟨ x₂ ⟩} {x₃ ∷ b₁ ⟨ x₄ ⟩} {x₅ ∷ c₁ ⟨ x₆ ⟩} (k< x₇ x₈)
+            | yes ex1<ex3 | no ¬ex1<ex5 | no ¬ex1=ex5
+  = contradiction (subst (OrdTerm.exp x₁ <ₒ_) x₇ ex1<ex3) l≮ₒl
+a+b<a+c⇒b<c {x₁ ∷ a₁ ⟨ x₂ ⟩} {x₃ ∷ b₁ ⟨ x₄ ⟩} {x₅ ∷ c₁ ⟨ x₆ ⟩} (t< x₇ x₈ a+b<a+c)
+            | yes ex1<ex3 | no ¬ex1<ex5 | no ¬ex1=ex5
+  = contradiction (subst (OrdTerm.exp x₁ <ₒ_) x₇ ex1<ex3) l≮ₒl
+a+b<a+c⇒b<c {x₁ ∷ a₁ ⟨ x₂ ⟩} {x₃ ∷ b₁ ⟨ x₄ ⟩} {x₅ ∷ c₁ ⟨ x₆ ⟩} a+b<a+c | no ¬ex1<ex3
+            with OrdTerm.exp x₁ <ₒ? OrdTerm.exp x₅ | OrdTerm.exp x₁ ≟ₒ OrdTerm.exp x₃
+... | yes ex1<ex5 | yes refl = e< ex1<ex5
+a+b<a+c⇒b<c {x₁ ∷ a₁ ⟨ x₂ ⟩} {x₃ ∷ b₁ ⟨ x₄ ⟩} {x₅ ∷ c₁ ⟨ x₆ ⟩} (e< a+b<a+c)
+            | no ¬ex1<ex3 | yes ex1<ex5 | no ¬ex1=ex3
+  = e< (<ₒ-trans (≮ₒ∧≢ₒ⇒>ₒ ¬ex1<ex3 ¬ex1=ex3) a+b<a+c)
+a+b<a+c⇒b<c {x₁ ∷ a₁ ⟨ x₂ ⟩} {x₃ ∷ b₁ ⟨ x₄ ⟩} {x₅ ∷ c₁ ⟨ x₆ ⟩} (k< x₇ x₈)
+            | no ¬ex1<ex3 | yes ex1<ex5 | no ¬ex1=ex3
+  = e< (subst (_>ₒ OrdTerm.exp x₃) x₇ (≮ₒ∧≢ₒ⇒>ₒ ¬ex1<ex3 ¬ex1=ex3))
+a+b<a+c⇒b<c {x₁ ∷ a₁ ⟨ x₂ ⟩} {x₃ ∷ b₁ ⟨ x₄ ⟩} {x₅ ∷ c₁ ⟨ x₆ ⟩} (t< x₇ x₈ a+b<a+c)
+            | no ¬ex1<ex3 | yes ex1<ex5 | no ¬ex1=ex3
+  = contradiction (subst (_<ₒ OrdTerm.exp x₅) x₇ ex1<ex5) l≮ₒl
+a+b<a+c⇒b<c {ω^ .(OrdTerm.exp x₃) · k ⟨ k>0 ⟩ ∷ a₁ ⟨ x₂ ⟩} {x₃ ∷ b₁ ⟨ x₄ ⟩} {x₅ ∷ c₁ ⟨ x₆ ⟩} a+b<a+c
+            | no ¬ex1<ex3 | no ¬ex3<ex5 | yes refl
+  with OrdTerm.exp x₃ ≟ₒ OrdTerm.exp x₅
+a+b<a+c⇒b<c {ω^ .(OrdTerm.exp ω^ OrdTerm.exp x₅ · k₁ ⟨ k>1 ⟩) · k ⟨ k>0 ⟩ ∷ a₁ ⟨ x₂ ⟩}
+            {ω^ .(OrdTerm.exp x₅) · k₁ ⟨ k>1 ⟩ ∷ b₁ ⟨ x₄ ⟩} {x₅ ∷ c₁ ⟨ x₆ ⟩}
+            (e< a+b<a+c)
+            | no ¬ex1<ex3 | no ¬ex3<ex5 | yes refl | yes refl = contradiction a+b<a+c l≮ₒl
+a+b<a+c⇒b<c {ω^ .(OrdTerm.exp ω^ OrdTerm.exp x₅ · k₁ ⟨ k>1 ⟩) · k ⟨ k>0 ⟩ ∷ a₁ ⟨ x₂ ⟩}
+            {ω^ .(OrdTerm.exp x₅) · k₁ ⟨ k>1 ⟩ ∷ b₁ ⟨ x₄ ⟩}
+            {x₅ ∷ c₁ ⟨ x₆ ⟩}
+            (k< x₁ x₃)
+            | no ¬ex1<ex3 | no ¬ex3<ex5 | yes refl | yes refl = k< x₁ (+-cancelˡ-< k x₃)
+a+b<a+c⇒b<c {ω^ .(OrdTerm.exp ω^ OrdTerm.exp x₅ · k₁ ⟨ k>1 ⟩) · k ⟨ k>0 ⟩ ∷ a₁ ⟨ x₂ ⟩}
+            {ω^ .(OrdTerm.exp x₅) · k₁ ⟨ k>1 ⟩ ∷ b₁ ⟨ x₄ ⟩}
+            {x₅ ∷ c₁ ⟨ x₆ ⟩}
+            (t< x₁ x₃ a+b<a+c) | no ¬ex1<ex3 | no ¬ex3<ex5 | yes refl | yes refl = t< refl (+-cancelˡ-≡ k x₃) a+b<a+c
+a+b<a+c⇒b<c {ω^ .(OrdTerm.exp x₃) · k ⟨ k>0 ⟩ ∷ a₁ ⟨ x₂ ⟩} {x₃ ∷ b₁ ⟨ x₄ ⟩} {x₅ ∷ c₁ ⟨ x₆ ⟩} (e< a+b<a+c)
+            | no ¬ex1<ex3 | no ¬ex3<ex5 | yes refl | no ¬ex3=ex5 = contradiction a+b<a+c l≮ₒl
+a+b<a+c⇒b<c {ω^ .(exp) · k ⟨ k>0 ⟩ ∷ a₁ ⟨ x₂ ⟩} {ω^ exp · k₁ ⟨ k>1 ⟩ ∷ b₁ ⟨ x₄ ⟩} {x₅ ∷ c₁ ⟨ x₆ ⟩} (k< x₁ x₇)
+            | no ¬ex1<ex3 | no ¬ex3<ex5 | yes refl | no ¬ex3=ex5 = contradiction x₇ (k+x≮k (recompute (_ >? _) k>1))
+a+b<a+c⇒b<c {ω^ .(exp) · k ⟨ k>0 ⟩ ∷ a₁ ⟨ x₂ ⟩} {ω^ exp · k₁ ⟨ k>1 ⟩ ∷ b₁ ⟨ x₄ ⟩} {x₅ ∷ c₁ ⟨ x₆ ⟩} (t< x₁ x₇ a+b<a+c)
+            | no ¬ex1<ex3 | no ¬ex3<ex5 | yes refl | no ¬ex3=ex5 = contradiction x₇ (k+x≢k (recompute (_ >? _) k>1))
+a+b<a+c⇒b<c {x₁ ∷ a₁ ⟨ x₂ ⟩} {x₃ ∷ b₁ ⟨ x₄ ⟩} {x₅ ∷ c₁ ⟨ x₆ ⟩} a+b<a+c | no ¬ex1<ex3 | no ¬ex3<ex5 | no ¬ex1=ex3
+            with OrdTerm.exp x₁ ≟ₒ OrdTerm.exp x₅
+a+b<a+c⇒b<c {ω^ .(OrdTerm.exp x₅) · k ⟨ k>0 ⟩ ∷ a₁ ⟨ x₂ ⟩} {x₃ ∷ b₁ ⟨ x₄ ⟩} {x₅ ∷ c₁ ⟨ x₆ ⟩} (a+b<a+c)
+            | no ¬ex1<ex3 | no ¬ex3<ex5 | no ¬ex1=ex3 | yes refl = e< (≮ₒ∧≢ₒ⇒>ₒ ¬ex1<ex3 ¬ex1=ex3)
+a+b<a+c⇒b<c {x₁ ∷ a₁ ⟨ x₂ ⟩} {x₃ ∷ b₁ ⟨ x₄ ⟩} {x₅ ∷ c₁ ⟨ x₆ ⟩} (e< a+b<a+c) | no ¬ex1<ex3 | no ¬ex3<ex5 | no ¬ex1=ex3 | no ¬ex1=ex5
+  = contradiction a+b<a+c l≮ₒl
+a+b<a+c⇒b<c {x₁ ∷ a₁ ⟨ x₂ ⟩} {x₃ ∷ b₁ ⟨ x₄ ⟩} {x₅ ∷ c₁ ⟨ x₆ ⟩} (k< x₇ x₈) | no ¬ex1<ex3 | no ¬ex3<ex5 | no ¬ex1=ex3 | no ¬ex1=ex5
+  = contradiction x₈ (<-asym x₈)
+a+b<a+c⇒b<c {x₁ ∷ a₁ ⟨ x₂ ⟩} {x₃ ∷ b₁ ⟨ x₄ ⟩} {x₅ ∷ c₁ ⟨ x₆ ⟩} (t< x₇ x₈ a+b<a+c) | no ¬ex1<ex3 | no ¬ex3<ex5 | no ¬ex1=ex3 | no ¬ex1=ex5
+    = a+b<a+c⇒b<c {a = a₁} a+b<a+c
+
+
+-- This is an example of using trichotomy argument, which we don't yet have explicitly
+-- TODO: define trichotomy
+a+b≡a+c⇒b≡c : ∀ {a b c} → a +ₒ b ≡ a +ₒ c → b ≡ c
+a+b≡a+c⇒b≡c {a} {b} {c} pf with b ≟ₒ c
+a+b≡a+c⇒b≡c {a} {b} {c} pf | yes refl = refl
+a+b≡a+c⇒b≡c {a} {b} {c} pf | no ¬b=c with b <ₒ? c
+a+b≡a+c⇒b≡c {a} {b} {c} pf | no ¬b=c | yes b<c = contradiction pf (<ₒ⇒≢ (a+b>a+c {a = a} b<c))
+a+b≡a+c⇒b≡c {a} {b} {c} pf | no ¬b=c | no ¬b<c = contradiction (sym pf) (<ₒ⇒≢ (a+b>a+c {a = a} (≮ₒ∧≢ₒ⇒>ₒ ¬b<c ¬b=c)))
+
+
++ₒ-assoc : ∀ {a b c} → (a +ₒ b) +ₒ c ≡ a +ₒ (b +ₒ c)
++ₒ-assoc {0ₒ} {b} {c} = refl
++ₒ-assoc {a@(x ∷ _ ⟨ x₁ ⟩)} {b} {0ₒ} rewrite (a+0≡a {a = b}) | (a+0≡a {a = (a +ₒ b)}) = refl
++ₒ-assoc {x ∷ a ⟨ x₁ ⟩} {0ₒ} {x₂ ∷ c ⟨ x₃ ⟩} = refl
++ₒ-assoc {x ∷ a ⟨ x₁ ⟩} {x₄ ∷ b ⟨ x₅ ⟩} {x₂ ∷ c ⟨ x₃ ⟩} with OrdTerm.exp x <ₒ? OrdTerm.exp x₄
++ₒ-assoc {x ∷ a ⟨ x₁ ⟩} {x₄ ∷ b ⟨ x₅ ⟩} {x₂ ∷ c ⟨ x₃ ⟩} | yes ea<eb with  OrdTerm.exp x₄ <ₒ? OrdTerm.exp x₂
++ₒ-assoc {x ∷ a ⟨ x₁ ⟩} {x₄ ∷ b ⟨ x₅ ⟩} {x₂ ∷ c ⟨ x₃ ⟩} | yes ea<eb | yes eb<ec with OrdTerm.exp x <ₒ? OrdTerm.exp x₂
++ₒ-assoc {x ∷ a ⟨ x₁ ⟩} {x₄ ∷ b ⟨ x₅ ⟩} {x₂ ∷ c ⟨ x₃ ⟩} | yes ea<eb | yes eb<ec | yes ea<ec = refl
++ₒ-assoc {x ∷ a ⟨ x₁ ⟩} {x₄ ∷ b ⟨ x₅ ⟩} {x₂ ∷ c ⟨ x₃ ⟩} | yes ea<eb | yes eb<ec | no ¬ea<ec = contradiction (<ₒ-trans ea<eb eb<ec) ¬ea<ec
++ₒ-assoc {x ∷ a ⟨ x₁ ⟩} {x₄ ∷ b ⟨ x₅ ⟩} {x₂ ∷ c ⟨ x₃ ⟩} | yes ea<eb | no ¬eb<ec with OrdTerm.exp x₄ ≟ₒ OrdTerm.exp x₂
++ₒ-assoc {x ∷ a ⟨ x₁ ⟩} {x₄ ∷ b ⟨ x₅ ⟩} {x₂ ∷ c ⟨ x₃ ⟩} | yes ea<eb | no ¬eb<ec | yes refl with OrdTerm.exp x <ₒ? OrdTerm.exp x₂
+... | yes ea<ec = refl
+... | no ¬ea<ec = contradiction ea<eb ¬ea<ec
++ₒ-assoc {x ∷ a ⟨ x₁ ⟩} {x₄ ∷ b ⟨ x₅ ⟩} {x₂ ∷ c ⟨ x₃ ⟩} | yes ea<eb | no ¬eb<ec | no ¬eb=ec with  OrdTerm.exp x <ₒ? OrdTerm.exp x₄
+... | yes ea<eb' = refl
+... | no ¬ea<eb' = contradiction ea<eb ¬ea<eb'
++ₒ-assoc {x ∷ a ⟨ x₁ ⟩} {x₄ ∷ b ⟨ x₅ ⟩} {x₂ ∷ c ⟨ x₃ ⟩} | no ¬ea<eb with OrdTerm.exp x ≟ₒ OrdTerm.exp x₄
++ₒ-assoc {x ∷ a ⟨ x₁ ⟩} {x₄ ∷ b ⟨ x₅ ⟩} {x₂ ∷ c ⟨ x₃ ⟩} | no ¬ea<eb | yes refl with OrdTerm.exp x₄ <ₒ? OrdTerm.exp x₂
++ₒ-assoc {x ∷ a ⟨ x₁ ⟩} {x₄ ∷ b ⟨ x₅ ⟩} {x₂ ∷ c ⟨ x₃ ⟩} | no ¬ea<eb | yes refl | yes eb<ec with OrdTerm.exp x₄ <ₒ? OrdTerm.exp x₂
+... | yes eb<ec' = refl
+... | no ¬eb<ec' = contradiction eb<ec ¬eb<ec'
++ₒ-assoc {x ∷ a ⟨ x₁ ⟩} {x₄ ∷ b ⟨ x₅ ⟩} {x₂ ∷ c ⟨ x₃ ⟩} | no ¬ea<eb | yes refl | no ¬eb<ec with OrdTerm.exp x₄ ≟ₒ OrdTerm.exp x₂
++ₒ-assoc {ω^ ea · k ⟨ k>0 ⟩ ∷ a ⟨ x₁ ⟩} {ω^ eb · k₁ ⟨ k₁>0 ⟩ ∷ b ⟨ x₅ ⟩} {ω^ ec · k₂ ⟨ k₂>0 ⟩ ∷ c ⟨ x₃ ⟩}
+         | no ¬ea<eb | yes refl | no ¬eb<ec | yes refl with ec <ₒ? eb
+... | yes ec<ec = contradiction ec<ec l≮ₒl --{!!}
+... | no ¬ec<ec with ec ≟ₒ ec
+... | yes refl = cong-o (cong-ot (+-assoc k k₁ k₂) refl (a+b>0 (a+b>0 k>0)) (a+b>0 (k>0))) refl (a+b>ₑo x₃ (k + k₁)) (a+b>ₑo (a+b>ₑo x₃ k₁) k) 
+... | no ¬ec=ec = contradiction refl ¬ec=ec
+
++ₒ-assoc {ω^ ea · k ⟨ k>0 ⟩ ∷ a ⟨ x₁ ⟩} {ω^ eb · k₁ ⟨ k₁>0 ⟩ ∷ b ⟨ x₅ ⟩} {ω^ ec · k₂ ⟨ k₂>0 ⟩ ∷ c ⟨ x₃ ⟩}
+         | no ¬ea<eb | yes refl | no ¬eb<ec | no ¬eb=ec with eb <ₒ? eb
+--+ₒ-assoc {x ∷ a ⟨ x₁ ⟩} {x₄ ∷ b ⟨ x₅ ⟩} {x₂ ∷ c ⟨ x₃ ⟩}
+--         | no ¬ea<eb | yes refl | no ¬eb<ec | no ¬eb=ec with OrdTerm.exp x₄ <ₒ? OrdTerm.exp x₄
+... | yes eb<eb = contradiction eb<eb l≮ₒl -- {!!}
+... | no ¬eb<eb with eb ≟ₒ eb
+... | yes refl = refl
+... | no ¬eb=eb = contradiction refl ¬eb=eb --{!!}
++ₒ-assoc {x ∷ a ⟨ x₁ ⟩} {x₄ ∷ b ⟨ x₅ ⟩} {x₂ ∷ c ⟨ x₃ ⟩} | no ¬ea<eb | no ¬ea=eb with OrdTerm.exp x <ₒ? OrdTerm.exp x₂
++ₒ-assoc {x ∷ a ⟨ x₁ ⟩} {x₄ ∷ b ⟨ x₅ ⟩} {x₂ ∷ c ⟨ x₃ ⟩} | no ¬ea<eb | no ¬ea=eb | yes ea<ec with OrdTerm.exp x₄ <ₒ? OrdTerm.exp x₂
++ₒ-assoc {x ∷ a ⟨ x₁ ⟩} {x₄ ∷ b ⟨ x₅ ⟩} {x₂ ∷ c ⟨ x₃ ⟩} | no ¬ea<eb | no ¬ea=eb | yes ea<ec | yes eb<ec with OrdTerm.exp x <ₒ? OrdTerm.exp x₂
+... | yes ea<ec' = refl
+... | no ¬ea<ec' = contradiction ea<ec ¬ea<ec'
++ₒ-assoc {x ∷ a ⟨ x₁ ⟩} {x₄ ∷ b ⟨ x₅ ⟩} {x₂ ∷ c ⟨ x₃ ⟩} | no ¬ea<eb | no ¬ea=eb | yes ea<ec | no ¬eb<ec
+  = contradiction (<ₒ-trans (≮ₒ∧≢ₒ⇒>ₒ ¬ea<eb ¬ea=eb) ea<ec) ¬eb<ec
++ₒ-assoc {x ∷ a ⟨ x₁ ⟩} {x₄ ∷ b ⟨ x₅ ⟩} {x₂ ∷ c ⟨ x₃ ⟩} | no ¬ea<eb | no ¬ea=eb | no ¬ea<ec with OrdTerm.exp x ≟ₒ OrdTerm.exp x₂
++ₒ-assoc {x ∷ a ⟨ x₁ ⟩} {x₄ ∷ b ⟨ x₅ ⟩} {x₂ ∷ c ⟨ x₃ ⟩} | no ¬ea<eb | no ¬ea=eb | no ¬ea<ec | yes refl with OrdTerm.exp x₄ <ₒ? OrdTerm.exp x₂
+...| no ¬eb<ec = contradiction (≮ₒ∧≢ₒ⇒>ₒ ¬ea<eb ¬ea=eb) ¬eb<ec
+...| yes eb<ec with OrdTerm.exp x₂ <ₒ? OrdTerm.exp x₂
+...| yes ec<ec = contradiction ec<ec l≮ₒl -- {!!}
+...| no ¬ec<ec with OrdTerm.exp x₂ ≟ₒ OrdTerm.exp x₂
+...| yes refl = refl
+...| no ¬ec=ec = contradiction refl ¬ec=ec --{!!}
+
++ₒ-assoc {x ∷ a ⟨ x₁ ⟩} {bb@(x₄ ∷ b ⟨ x₅ ⟩)} {cc@(x₂ ∷ c ⟨ x₃ ⟩)}
+         | no ¬ea<eb | no ¬ea=eb | no ¬ea<ec | no ¬ea=ec with OrdTerm.exp x₄ <ₒ? OrdTerm.exp x₂
+--+ₒ-assoc {x ∷ a ⟨ x₁ ⟩} {x₄ ∷ b ⟨ x₅ ⟩} {x₂ ∷ c ⟨ x₃ ⟩}
++ₒ-assoc {ω^ ea · k ⟨ k>0 ⟩ ∷ a ⟨ x₁ ⟩} {bb@(ω^ eb · k₁ ⟨ k₁>0 ⟩ ∷ b ⟨ x₅ ⟩)} {cc@(ω^ ec · k₂ ⟨ k₂>0 ⟩ ∷ c ⟨ x₃ ⟩)}
+         | no ¬ea<eb | no ¬ea=eb | no ¬ea<ec | no ¬ea=ec | yes eb<ec with ea <ₒ? ec
+...| yes ea<ec' = contradiction ea<ec' ¬ea<ec --{!!}
+...| no ¬ea<ec' with ea ≟ₒ ec
+...| yes ea=ec' = contradiction ea=ec' ¬ea=ec
+                -- Note that here we have to call "with" together with the equality check
+                -- otherwise the recursive call won't have enough information
+...| no ¬ea=ec' with (eb <ₒ? ec) | (+ₒ-assoc {a = a} {b = bb} {c = cc})
+...| yes eb<ec' | eq = cong-o refl eq (x>ₑa+b (x>ₑa+b x₁ (ss (≮ₒ∧≢ₒ⇒>ₒ ¬ea<eb ¬ea=eb)))
+                                        (ss (≮ₒ∧≢ₒ⇒>ₒ ¬ea<ec ¬ea=ec)))
+                                      (x>ₑa+b x₁ (ss (≮ₒ∧≢ₒ⇒>ₒ ¬ea<ec' ¬ea=ec')))
+...| no ¬eb<ec' | _ = contradiction eb<ec ¬eb<ec'
++ₒ-assoc {x ∷ a ⟨ x₁ ⟩} {bb@(x₄ ∷ b ⟨ x₅ ⟩)} {cc@(x₂ ∷ c ⟨ x₃ ⟩)}
+         | no ¬ea<eb | no ¬ea=eb | no ¬ea<ec | no ¬ea=ec | no ¬eb<ec with  OrdTerm.exp x₄ ≟ₒ OrdTerm.exp x₂
+--+ₒ-assoc {x ∷ a ⟨ x₁ ⟩} {bb@(x₄ ∷ b ⟨ x₅ ⟩)} {cc@(x₂ ∷ c ⟨ x₃ ⟩)}
++ₒ-assoc {ω^ ea · k ⟨ k>0 ⟩ ∷ a ⟨ x₁ ⟩} {bb@(ω^ eb · k₁ ⟨ k₁>0 ⟩ ∷ b ⟨ x₅ ⟩)} {cc@(ω^ ec · k₂ ⟨ k₂>0 ⟩ ∷ c ⟨ x₃ ⟩)}
+         | no ¬ea<eb | no ¬ea=eb | no ¬ea<ec | no ¬ea=ec | no ¬eb<ec | yes refl with  ea <ₒ? ec
+... | yes ea<ec' = contradiction ea<ec' ¬ea<ec -- {!!}
+... | no ¬ea<ec' with ea ≟ₒ ec
+... | yes ea=ec' = contradiction ea=ec' ¬ea=ec --{!!}
+... | no ¬ea=ec' with ec <ₒ? ec | (+ₒ-assoc {a = a} {b = bb} {c = cc})
+... | yes ec<ec | _ = contradiction ec<ec l≮ₒl
+... | no ¬ec<ec | eq with  ec ≟ₒ ec
+... | yes refl = cong-o refl eq (x>ₑa+b (x>ₑa+b x₁ (ss (≮ₒ∧≢ₒ⇒>ₒ ¬ea<eb ¬ea=eb)))
+                                  (ss (≮ₒ∧≢ₒ⇒>ₒ ¬ea<ec ¬ea=ec))) (x>ₑa+b x₁ (ss (≮ₒ∧≢ₒ⇒>ₒ ¬ea<ec' ¬ea=ec')))
+... | no ¬ec=ec = contradiction refl ¬ec=ec
+--with OrdTerm.exp x₂ <ₒ? OrdTerm.exp x₂ | (+ₒ-assoc {a = a} {b = bb} {c = cc}) |  OrdTerm.exp x₂ ≟ₒ OrdTerm.exp x₂ 
+--... | no ec<ec | eq | yes refl  = {!!}
+--+ₒ-assoc {x ∷ a ⟨ x₁ ⟩} {bb@(x₄ ∷ b ⟨ x₅ ⟩)} {cc@(x₂ ∷ c ⟨ x₃ ⟩)}
++ₒ-assoc {ω^ ea · k ⟨ k>0 ⟩ ∷ a ⟨ x₁ ⟩} {bb@(ω^ eb · k₁ ⟨ k₁>0 ⟩ ∷ b ⟨ x₅ ⟩)} {cc@(ω^ ec · k₂ ⟨ k₂>0 ⟩ ∷ c ⟨ x₃ ⟩)}
+         | no ¬ea<eb | no ¬ea=eb | no ¬ea<ec | no ¬ea=ec | no ¬eb<ec | no ¬eb=ec with ea <ₒ? eb
+... | yes ea<eb' = contradiction ea<eb' ¬ea<eb
+... | no ¬ea<eb' with ea ≟ₒ eb
+... | yes ea=eb' = contradiction ea=eb' ¬ea=eb --{!!}
+                 -- Note: this is a recursive call with further refinement
+... | no ¬ea=eb' with eb <ₒ? ec | +ₒ-assoc {a = a} {b = bb} {c = cc}
+... | yes eb<ec' | _  = contradiction eb<ec' ¬eb<ec
+... | no ¬eb<ec' | eq with eb ≟ₒ ec
+... | no ¬eb=ec' = cong-o refl eq (x>ₑa+b (x>ₑa+b x₁ (ss (≮ₒ∧≢ₒ⇒>ₒ ¬ea<eb ¬ea=eb)))
+                                    (ss (≮ₒ∧≢ₒ⇒>ₒ ¬ea<ec ¬ea=ec)))
+                                  (x>ₑa+b x₁ (ss (≮ₒ∧≢ₒ⇒>ₒ ¬ea<eb' ¬ea=eb')))
+... | yes eb=ec' = contradiction eb=ec' ¬eb=ec
+--= let
+--            qqq = +ₒ-assoc {a = a} {b = bb} {c = cc}
+--         in {!!}
+
+--with  +ₒ-assoc {a = a} {b = bb} {c = cc} | eb ≟ₒ ec | eb <ₒ? ec
+--... | eq | no xx | no yy = {!!}
+--... | no eb<ec' | yes ¬eb=ec' | eq = {!!} -- cong-o refl {!eq!} {!!} {!!} --{!!}
 
 -- Definition of multiplication together with the
 -- theorem about the recursive call (similarly to +ₒ)
@@ -613,6 +822,15 @@ b+a-b≡b {x ∷ a₁ ⟨ x₁ ⟩} {.x ∷ b₁ ⟨ x₃ ⟩} (inj₁ x₄) | n
 b+a-b≡b {x ∷ a₁ ⟨ x₁ ⟩} {.x ∷ .a₁ ⟨ x₃ ⟩} (inj₂ refl) | no ¬p | no ¬p₁ rewrite (a-a≡0 {a = a₁}) = refl
 
 
+a-b≡0⇒a≡b : ∀ {a b} → (≥ : a ≥ₒ b) → (a -ₒ b) {≥} ≡ 0ₒ → a ≡ b
+a-b≡0⇒a≡b {a} {b} a≥b pf = sym $
+                           begin
+                            b                    ≡⟨ sym a+0≡a ⟩
+                            b +ₒ 0ₒ              ≡⟨ cong (b +ₒ_) (sym pf) ⟩
+                            b +ₒ (a -ₒ b) {a≥b}  ≡⟨ b+a-b≡b a≥b ⟩
+                            a
+                           ∎
+                           where open ≡-Reasoning
 
 module _ where
   x = ω^ (n→o 5) · 6 ⟨ s≤s z≤n ⟩ ∷ (ωₒ *ₒ (n→o 3)) ⟨ ss (k< refl (s≤s (s≤s z≤n))) ⟩
@@ -623,6 +841,104 @@ module _ where
   div-thm₁ : y *ₒ p +ₒ q ≡ x
   div-thm₁ = refl
 
+
+x+y≮x : ∀ {x y} → ¬ x +ₒ y <ₒ x
+x+y≮x {x} {0ₒ} pf rewrite (a+0≡a {a = x}) = contradiction pf l≮ₒl
+x+y≮x {x} {y@(x₄ ∷ y₁ ⟨ x₅ ⟩)} pf = let
+    x+y>x+0 = (a+b>a+c {a = x} {b = y} {c = 0ₒ} z<)
+    x+y>x = subst (x +ₒ y >ₒ_) (a+0≡a {a = x}) x+y>x+0
+    r = <ₒ-trans pf x+y>x
+  in contradiction r l≮ₒl
+
+*-distribₗ : ∀ {a b c} → a *ₒ (b +ₒ c) ≡ (a *ₒ b) +ₒ (a *ₒ c)
+*-distribₗ {0ₒ} {b} {c} = refl
+*-distribₗ {x₁ ∷ a₁ ⟨ x₂ ⟩} {0ₒ} {c} = refl
+*-distribₗ {a@(x₁ ∷ a₁ ⟨ x₂ ⟩)} {b@(x₃ ∷ b₁ ⟨ x₄ ⟩)} {0ₒ} rewrite (a+0≡a {a = a *ₒ b}) = refl
+*-distribₗ {ω^ ea · ka ⟨ ka>0 ⟩ ∷ ra ⟨ x₂ ⟩} {ω^ eb · kb ⟨ kb>0 ⟩ ∷ rb ⟨ x₄ ⟩} {ω^ ec · kc ⟨ kc>0 ⟩ ∷ rc ⟨ x₆ ⟩} with eb <ₒ? ec
+*-distribₗ {ω^ ea · ka ⟨ ka>0 ⟩ ∷ ra ⟨ x₂ ⟩} {ω^ eb · kb ⟨ kb>0 ⟩ ∷ rb ⟨ x₄ ⟩} {ω^ ec · kc ⟨ kc>0 ⟩ ∷ rc ⟨ x₆ ⟩}
+           | yes eb<ec with ec ≟ₒ 0ₒ
+*-distribₗ {ω^ ea · ka ⟨ ka>0 ⟩ ∷ ra ⟨ x₂ ⟩} {ω^ eb · kb ⟨ kb>0 ⟩ ∷ rb ⟨ x₄ ⟩} {ω^ ec · kc ⟨ kc>0 ⟩ ∷ rc ⟨ x₆ ⟩}
+           | yes eb<ec | yes ec=0 with eb ≟ₒ 0ₒ
+
+*-distribₗ {ω^ ea · ka ⟨ ka>0 ⟩ ∷ ra ⟨ x₂ ⟩} {ω^ eb · kb ⟨ kb>0 ⟩ ∷ rb ⟨ x₄ ⟩} {ω^ ec · kc ⟨ kc>0 ⟩ ∷ rc ⟨ x₆ ⟩}
+           | yes eb<ec | yes refl | yes refl = contradiction eb<ec l≮ₒl
+
+*-distribₗ {ω^ ea · ka ⟨ ka>0 ⟩ ∷ ra ⟨ x₂ ⟩} {ω^ eb · kb ⟨ kb>0 ⟩ ∷ rb ⟨ x₄ ⟩} {ω^ ec · kc ⟨ kc>0 ⟩ ∷ rc ⟨ x₆ ⟩}
+           | yes eb<ec | yes refl | no ¬eb=0 = ⊥-elim-irr (l≮ₒ0 eb<ec)
+
+*-distribₗ {ω^ ea · ka ⟨ ka>0 ⟩ ∷ ra ⟨ x₂ ⟩} {ω^ eb · kb ⟨ kb>0 ⟩ ∷ rb ⟨ x₄ ⟩} {ω^ ec · kc ⟨ kc>0 ⟩ ∷ rc ⟨ x₆ ⟩}
+           | yes eb<ec | no ¬ec=0 with eb ≟ₒ 0ₒ
+
+*-distribₗ {ω^ ea · ka ⟨ ka>0 ⟩ ∷ ra ⟨ x₂ ⟩} {ω^ eb · kb ⟨ kb>0 ⟩ ∷ rb ⟨ x₄ ⟩} {ω^ ec · kc ⟨ kc>0 ⟩ ∷ rc ⟨ x₆ ⟩}
+           | yes eb<ec | no ¬ec=0 | yes refl with ea <ₒ? ea +ₒ ec
+
+... | yes ea<ea+ec = refl
+... | no ¬ea<ea+ec = contradiction (subst (_<ₒ ea +ₒ ec) a+0≡a (a+b>a+c {a = ea}{b = ec}{c = 0ₒ} (n≢0⇒n>ₒ0 ¬ec=0))) ¬ea<ea+ec
+
+*-distribₗ {ω^ ea · ka ⟨ ka>0 ⟩ ∷ ra ⟨ x₂ ⟩} {ω^ eb · kb ⟨ kb>0 ⟩ ∷ rb ⟨ x₄ ⟩} {ω^ ec · kc ⟨ kc>0 ⟩ ∷ rc ⟨ x₆ ⟩}
+           | yes eb<ec | no ¬ec=0 | no ¬eb=0 with ea +ₒ eb <ₒ? ea +ₒ ec
+... | yes ea+eb<ea+ec = refl
+... | no ¬ea+eb<ea+ec = contradiction (a+b>a+c {a = ea} eb<ec) ¬ea+eb<ea+ec
+
+*-distribₗ {ω^ ea · ka ⟨ ka>0 ⟩ ∷ ra ⟨ x₂ ⟩} {ω^ eb · kb ⟨ kb>0 ⟩ ∷ rb ⟨ x₄ ⟩} {ω^ ec · kc ⟨ kc>0 ⟩ ∷ rc ⟨ x₆ ⟩}
+           | no ¬eb<ec with eb ≟ₒ ec
+
+*-distribₗ {ω^ ea · ka ⟨ ka>0 ⟩ ∷ ra ⟨ x₂ ⟩} {ω^ eb · kb ⟨ kb>0 ⟩ ∷ rb ⟨ x₄ ⟩} {ω^ ec · kc ⟨ kc>0 ⟩ ∷ rc ⟨ x₆ ⟩}
+           | no ¬eb<ec | yes refl with eb ≟ₒ 0ₒ
+*-distribₗ {ω^ ea · ka ⟨ ka>0 ⟩ ∷ ra ⟨ x₂ ⟩} {ω^ eb · kb ⟨ kb>0 ⟩ ∷ rb ⟨ x₄ ⟩} {ω^ ec · kc ⟨ kc>0 ⟩ ∷ rc ⟨ x₆ ⟩}
+           | no ¬eb<ec | yes refl | yes refl with ea <ₒ? ea
+... | yes ea<ea = contradiction ea<ea l≮ₒl
+... | no ¬ea<ea with ea ≟ₒ ea
+... | yes refl = cong-o
+                    (cong-ot (*-distribˡ-+ ka kb kc) refl (a*b>0 ka>0 (a+b>0 kb>0)) (b+a>0 (a*b>0 ka>0 kc>0)))
+                    refl (thm x₂ (kb + kc) (a+b>0 kb>0)) (a+b>ₑo (thm x₂ kc kc>0) (ka * kb))
+... | no ¬ea=ea = contradiction refl ¬ea=ea
+
+*-distribₗ {ω^ ea · ka ⟨ ka>0 ⟩ ∷ ra ⟨ x₂ ⟩} {ω^ eb · kb ⟨ kb>0 ⟩ ∷ rb ⟨ x₄ ⟩} {ω^ ec · kc ⟨ kc>0 ⟩ ∷ rc ⟨ x₆ ⟩}
+           | no ¬eb<ec | yes refl | no ¬eb=0 with ea +ₒ eb <ₒ? ea +ₒ eb
+... | yes ea+eb<ea+eb = contradiction ea+eb<ea+eb l≮ₒl
+... | no ¬ea+eb<ea+eb with ea +ₒ eb ≟ₒ ea +ₒ eb
+... | yes refl = refl
+... | no ¬ea+eb=ea+eb = contradiction refl ¬ea+eb=ea+eb
+
+*-distribₗ {ω^ ea · ka ⟨ ka>0 ⟩ ∷ ra ⟨ x₂ ⟩} {ω^ eb · kb ⟨ kb>0 ⟩ ∷ rb ⟨ x₄ ⟩} {ω^ ec · kc ⟨ kc>0 ⟩ ∷ rc ⟨ x₆ ⟩}
+           | no ¬eb<ec | no ¬eb=ec with eb ≟ₒ 0ₒ
+
+*-distribₗ {ω^ ea · ka ⟨ ka>0 ⟩ ∷ ra ⟨ x₂ ⟩} {ω^ eb · kb ⟨ kb>0 ⟩ ∷ rb ⟨ x₄ ⟩} {ω^ ec · kc ⟨ kc>0 ⟩ ∷ rc ⟨ x₆ ⟩}
+           | no ¬eb<ec | no ¬eb=ec | yes refl with ec ≟ₒ 0ₒ
+... | yes refl = contradiction refl ¬eb=ec
+... | no ¬ec=0 = contradiction (n≢0⇒n>ₒ0 ¬ec=0) ¬eb<ec
+
+*-distribₗ {ω^ ea · ka ⟨ ka>0 ⟩ ∷ ra ⟨ x₂ ⟩} {ω^ eb · kb ⟨ kb>0 ⟩ ∷ rb ⟨ x₄ ⟩} {ω^ ec · kc ⟨ kc>0 ⟩ ∷ rc ⟨ x₆ ⟩}
+           | no ¬eb<ec | no ¬eb=ec | no ¬eb=0 with ec ≟ₒ 0ₒ
+*-distribₗ {a@(ω^ ea · ka ⟨ ka>0 ⟩ ∷ ra ⟨ x₂ ⟩)} {b@(ω^ eb · kb ⟨ kb>0 ⟩ ∷ rb ⟨ x₄ ⟩)} {c@(ω^ ec · kc ⟨ kc>0 ⟩ ∷ rc ⟨ x₆ ⟩)}
+           | no ¬eb<ec | no ¬eb=ec | no ¬eb=0 | yes refl with ea +ₒ eb <ₒ? ea
+... | yes ea+eb<ea = contradiction ea+eb<ea x+y≮x
+... | no ¬ea+eb<ea with ea +ₒ eb ≟ₒ ea
+... | yes ea+eb=ea = let
+                       eb=0 = a+b≡a+c⇒b≡c {a = ea} {c = 0ₒ} (trans ea+eb=ea (sym a+0≡a))
+                     in contradiction eb=0 ¬eb=0
+... | no ¬ea+eb=ea = cong-o refl
+                            -- recursive call
+                            (*-distribₗ {a = a} {b = rb} {c = c})
+                            -- note that these two expressions are autogenerated by agda,
+                            -- so it doesn't really matter that they look scary
+                            (x>ₑa*b (x>ₑa+b x₄ (ss (≮ₒ∧≢ₒ⇒>ₒ ¬eb<ec ¬eb=ec))) _ ¬eb=0)
+                            (x>ₑa+b (x>ₑa*b x₄ _ ¬eb=0) (ss (≮ₒ∧≢ₒ⇒>ₒ ¬ea+eb<ea ¬ea+eb=ea)))
+
+*-distribₗ {a@(ω^ ea · ka ⟨ ka>0 ⟩ ∷ ra ⟨ x₂ ⟩)} {ω^ eb · kb ⟨ kb>0 ⟩ ∷ rb ⟨ x₄ ⟩} {c@(ω^ ec · kc ⟨ kc>0 ⟩ ∷ rc ⟨ x₆ ⟩)}
+           | no ¬eb<ec | no ¬eb=ec | no ¬eb=0 | no ¬ec=0 with ea +ₒ eb <ₒ? ea +ₒ ec
+... | yes ea+eb<ea+ec = ⊥-elim-irr (¬x<y⇒x>y ea+eb<ea+ec (a+b>a+c {a = ea} (≮ₒ∧≢ₒ⇒>ₒ ¬eb<ec ¬eb=ec)))
+... | no ¬ea+eb<ea+ec with ea +ₒ eb ≟ₒ ea +ₒ ec
+... | yes ea+eb=ea+ec = contradiction (a+b≡a+c⇒b≡c {a = ea} ea+eb=ea+ec) ¬eb=ec
+*-distribₗ {ω^ ea · ka ⟨ ka>0 ⟩ ∷ ra ⟨ x₂ ⟩} {ω^ eb · kb ⟨ kb>0 ⟩ ∷ rb ⟨ x₄ ⟩} {ω^ 0ₒ · kc ⟨ kc>0 ⟩ ∷ rc ⟨ x₆ ⟩}
+           | no ¬eb<ec | no ¬eb=ec | no ¬eb=0 | no ¬ec=0 | no ¬ea+eb<ea+ec | no ¬ea+eb=ea+ec = contradiction refl ¬ec=0
+*-distribₗ {a@(ω^ ea · ka ⟨ ka>0 ⟩ ∷ ra ⟨ x₂ ⟩)} {ω^ eb · kb ⟨ kb>0 ⟩ ∷ rb ⟨ x₄ ⟩} {c@(ω^ x₁ ∷ ec ⟨ x₃ ⟩ · kc ⟨ kc>0 ⟩ ∷ rc ⟨ x₆ ⟩)}
+           | no ¬eb<ec | no ¬eb=ec | no ¬eb=0 | no ¬ec=0 | no ¬ea+eb<ea+ec | no ¬ea+eb=ea+ec =
+           cong-o refl
+                  (*-distribₗ {a = a} {b = rb} {c = c})
+                  (x>ₑa*b (x>ₑa+b x₄ (ss (≮ₒ∧≢ₒ⇒>ₒ ¬eb<ec ¬eb=ec))) _ ¬eb=0)
+                  (x>ₑa+b (x>ₑa*b x₄ _ ¬eb=0) (ss (≮ₒ∧≢ₒ⇒>ₒ ¬ea+eb<ea+ec ¬ea+eb=ea+ec)))
 
 >⇒≢ : ∀ {x} → x > 0 → x ≢ 0
 >⇒≢ (s≤s x>0) = λ ()
@@ -661,7 +977,7 @@ ra≥rb⇒a≥b : ∀ {k c}.{p₁}{ra}.{pa}{l d}.{p₂}{rb}.{pb}
            → ra ≥ₒ rb
            → ω^ k · c ⟨ p₁ ⟩ ∷ ra ⟨ pa ⟩  ≥ₒ ω^ l · d ⟨ p₂ ⟩ ∷ rb ⟨ pb ⟩
 ra≥rb⇒a≥b k≡l c≡d (inj₁ x₁) = inj₁ (t< (sym k≡l) (sym c≡d) x₁)
-ra≥rb⇒a≥b refl refl (inj₂ refl) = inj₂ refl           
+ra≥rb⇒a≥b refl refl (inj₂ refl) = inj₂ refl
 
 ka≥kb⇒a≥b : ∀ {k c}.{p₁}{ra}.{pa}{l d}.{p₂}{rb}.{pb}
            → k ≡ l
@@ -710,7 +1026,7 @@ d*c/d≡c⇒c/d≡1⇒c≡d : ∀ {c d}
                    → c ≡ d
 d*c/d≡c⇒c/d≡1⇒c≡d {d = d} d≢0 d*c/d≡c c/d≡1
                    rewrite c/d≡1 | *-identityʳ d  = sym d*c/d≡c
-                   
+
 
 
 infixl 19 _divmodₒ_
@@ -790,24 +1106,115 @@ _divmodₒ_ a b {≢0} with a <ₒ? b
     b = ω^ l · d ⟨ d>0 ⟩ ∷ rb ⟨ x₃ ⟩
     p' , q' = (ra divmodₒ b) { λ () }
   in (p +ₒ p') , q'
-  
 
--- XXX Write more tests or better prove that
+
 -- ∀ x y y≢0 → div-check x y y≢0
 module divtests where
   div-check : (x y : Ordinal) → (≢0 : y ≢ 0ₒ) → Set
   div-check x y ≢0 = let p , q = (x divmodₒ y) {≢0} in
                      q <ₒ y × y *ₒ p +ₒ q ≡ x
-            
+
   -- ω^2·3+5 / ω^2·3+1 = (1ₒ , (n-o 4))
   divtest₁ : div-check  (ω^ (n→o 2) · 3 ⟨ s≤s z≤n ⟩ ∷ (n→o 5)  ⟨ ss z< ⟩)
                        (ω^ (n→o 2) · 3 ⟨ s≤s z≤n ⟩ ∷ 1ₒ ⟨ ss z< ⟩)
-                       λ () 
+                       λ ()
   divtest₁ = e< z< , refl
 
   -- ω^2·4+1 / ω^2·2+3  = (1ₒ , (ω^2·2 + 1))
   divtest₂ : div-check  (ω^ (n→o 2) · 4 ⟨ s≤s z≤n ⟩ ∷ (n→o 1)  ⟨ ss z< ⟩)
                        (ω^ (n→o 2) · 2 ⟨ s≤s z≤n ⟩ ∷ (n→o 3) ⟨ ss z< ⟩)
                        λ ()
-  divtest₂ = (t< refl refl (k< refl (s≤s (s≤s z≤n)))) , refl 
+  divtest₂ = (t< refl refl (k< refl (s≤s (s≤s z≤n)))) , refl
 
+
+add-split : ∀ {k c ra}.{c>0}.{pf} →
+           (ω^ k · c ⟨ c>0 ⟩ ∷ 0ₒ ⟨ zz ⟩) +ₒ ra ≡
+           (ω^ k · c ⟨ c>0 ⟩ ∷ ra ⟨ pf ⟩)
+add-split {k} {c} {0ₒ} {c>0} {pf} = refl
+add-split {k} {c} {ω^ er · kr ⟨ kr>0 ⟩ ∷ ra ⟨ x₂ ⟩} {c>0} {pf} with (recompute (_ >ₑ? _) pf)
+... | ss x₁ with k <ₒ? er
+... | yes k<er = ⊥-elim-irr (¬x<y⇒x>y k<er x₁)
+... | no ¬k<er with  k ≟ₒ er
+... | yes refl = contradiction x₁ l≮ₒl
+... | no ¬k=er = refl
+
+divmod-thm : (x y : Ordinal) → (≢0 : y ≢ 0ₒ)
+           → let p , q = (x divmodₒ y) {≢0} in
+             y *ₒ p +ₒ q ≡ x
+divmod-thm x y y≢0 with x <ₒ? y
+divmod-thm x y y≢0 | yes x<y = hlpr x y
+  where
+    hlpr : ∀ x y → y *ₒ 0ₒ +ₒ x ≡ x
+    hlpr x 0ₒ = refl
+    hlpr x (_ ∷ _ ⟨ _ ⟩) = refl
+divmod-thm 0ₒ 0ₒ y≢0 | no ¬x<y = ⊥-elim-irr (y≢0 refl)
+divmod-thm 0ₒ (x₁ ∷ y₁ ⟨ x₂ ⟩) y≢0 | no ¬x<y = ⊥-elim-irr (¬x<y z<)
+divmod-thm (x₁ ∷ x₂ ⟨ x₃ ⟩) 0ₒ y≢0 | no ¬x<y = ⊥-elim-irr (y≢0 refl)
+divmod-thm (ω^ k · c ⟨ c>0 ⟩ ∷ ra ⟨ x₁ ⟩) (ω^ l · d ⟨ d>0 ⟩ ∷ rb ⟨ x₃ ⟩) y≢0 | no ¬x<y with a≥b⇒ea≥eb (o-≮⇒≥ ¬x<y)
+divmod-thm x@(ω^ k · c ⟨ c>0 ⟩ ∷ ra ⟨ x₁ ⟩) y@(ω^ .k · d ⟨ d>0 ⟩ ∷ rb ⟨ x₃ ⟩) y≢0 | no ¬x<y | inj₂ refl
+           with let
+              d>0 = recompute (d >? 0) d>0
+              c/d = (c / d) {fromWitnessFalse (>⇒≢ d>0)}
+              --c/d>0 = m≥n⇒m/n>0 (a≥b⇒ka≥kb (o-≮⇒≥ ¬x<y) refl) -- (>⇒≢ d>0)
+              --p = ω^ 0ₒ · c/d ⟨ c/d>0 ⟩ ∷ [] ⟨ zz ⟩
+              --a = ω^ k · c ⟨ c>0 ⟩ ∷ ra ⟨ x₁ ⟩
+              --b = ω^ k · d ⟨ d>0 ⟩ ∷ rb ⟨ x₃ ⟩
+           in d * c/d ≟ c
+... | yes d*c/d≡c with ra <ₒ? rb
+... | yes ra<rb with let
+                  d>0 = recompute (d >? 0) d>0
+                  c/d = (c / d) {fromWitnessFalse (>⇒≢ d>0)}
+                in c/d >? 1
+... | yes c/d>1 = b+a-b≡b (inj₁ (k< refl (d*[c/d-1]<c (>⇒≢ (recompute (d >? 0) d>0)) (>⇒≢ c>0) d*c/d≡c c/d>1)))
+... | no ¬c/d>1 = contradiction
+                    ra<rb
+                    (≥⇒≮ (a≥b⇒ra≥rb
+                            (o-≮⇒≥ ¬x<y)
+                            refl
+                            (d*c/d≡c⇒c/d≡1⇒c≡d
+                               (>⇒≢ (recompute (d >? 0) d>0))
+                               d*c/d≡c
+                               (a>0⇒a≯1⇒a≡1 (m≥n⇒m/n>0 (a≥b⇒ka≥kb (o-≮⇒≥ ¬x<y) refl)) ¬c/d>1))))
+divmod-thm x@(ω^ k · c ⟨ c>0 ⟩ ∷ ra ⟨ x₁ ⟩) y@(ω^ .k · d ⟨ d>0 ⟩ ∷ rb ⟨ x₃ ⟩) y≢0 | no ¬x<y | inj₂ refl | yes d*c/d≡c
+           | no ¬ra<rb with (o-≮⇒≥  ¬ra<rb)
+... | inj₂ refl = b+a-b≡b (inj₂ (cong-o (cong-ot (sym d*c/d≡c)
+                                                  refl c>0
+                                                  (subst (_> 0) (sym d*c/d≡c) c>0))
+                                         refl x₁ (hlpr (sym d*c/d≡c) x₁)))
+          where
+            hlpr : ∀ {k c d ra}.{pf} → (c≡d : c ≡ d) → ω^ k · c ⟨ pf ⟩ >ₑ ra → ω^ k · d ⟨ subst (_> 0) c≡d pf ⟩ >ₑ ra
+            hlpr refl x = x
+
+... | inj₁ ra>rb = b+a-b≡b (inj₁ (t< refl d*c/d≡c ra>rb))
+divmod-thm (ω^ k · c ⟨ c>0 ⟩ ∷ ra ⟨ x₁ ⟩) (ω^ .k · d ⟨ d>0 ⟩ ∷ rb ⟨ x₃ ⟩) y≢0 | no ¬x<y | inj₂ refl | no d*c/d≢c
+  = b+a-b≡b (inj₁ (k< refl (≤∧≢⇒< (subst (_≤ c) ((*-comm _ d)) (m/n*n≤m c d {_})) d*c/d≢c)))
+divmod-thm x@(ω^ k · c ⟨ c>0 ⟩ ∷ ra ⟨ x₁ ⟩) y@(ω^ l · d ⟨ d>0 ⟩ ∷ rb ⟨ x₃ ⟩) y≢0 | no ¬x<y | inj₁ k>l =
+  let
+    p' , q' = (ra divmodₒ y) {y≢0}
+    y*p'+q'≡ra = divmod-thm ra y y≢0
+    k-l = (k -ₒ l) { inj₁ k>l }
+    p = ω^ k-l · c ⟨ c>0 ⟩ ∷ [] ⟨ zz ⟩
+    --p = ω^(k-l)·c
+    --y *ₒ (p +ₒ p') +ₒ q' = x
+  in begin
+       y *ₒ (p +ₒ p') +ₒ q'  ≡⟨ cong (_+ₒ q') (*-distribₗ {a = y} {b = p} {c = p'})  ⟩
+       y *ₒ p +ₒ y *ₒ p' +ₒ q' ≡⟨ +ₒ-assoc {a = y *ₒ p} ⟩
+       y *ₒ p +ₒ (y *ₒ p' +ₒ q') ≡⟨ cong (y *ₒ p +ₒ_) y*p'+q'≡ra  ⟩
+       y *ₒ p +ₒ ra ≡⟨ y*p+ra=x ⟩
+       x
+     ∎
+     where
+       open ≡-Reasoning
+
+       y*p+ra=x : y *ₒ (ω^ (k -ₒ l) {inj₁ k>l} · c ⟨ c>0 ⟩ ∷ [] ⟨ zz ⟩) +ₒ ra ≡ x
+       y*p+ra=x with (k -ₒ l) {inj₁ k>l} ≟ₒ 0ₒ
+       y*p+ra=x | no ¬k-l=0 = --{!!}
+                  begin
+                    (ω^ l +ₒ (k -ₒ l) · c ⟨ _ ⟩ ∷ 0ₒ ⟨ _ ⟩) +ₒ ra ≡⟨ cong (_+ₒ ra)
+                                                                          (cong-o (cong-ot refl (b+a-b≡b (inj₁ k>l)) c>0 c>0)
+                                                                          refl zz zz)
+                                                                  ⟩
+                    (ω^ k · c ⟨ c>0 ⟩ ∷ 0ₒ ⟨ _ ⟩) +ₒ ra           ≡⟨ add-split ⟩
+                    x
+                  ∎
+       y*p+ra=x | yes k-l=0 = contradiction (subst (_>ₒ l) (a-b≡0⇒a≡b (inj₁ k>l) k-l=0) k>l) l≮ₒl
